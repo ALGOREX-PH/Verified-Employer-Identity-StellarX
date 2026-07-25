@@ -1,132 +1,99 @@
-# StellarX Workshop Starter
+# Lehitimo — Verified Employer Identity on Stellar
 
-A ready-to-run scaffold for a **StellarX workshop**. It gives you a
-working Stellar app on **testnet** so you can spend the workshop bending it toward
-your own idea instead of fighting setup.
+**Check before you apply.** Job scams are rampant; applicants have no easy way
+to confirm an employer is a legitimate, DTI-registered business. Lehitimo gives
+DTI-certified businesses an on-chain credential — a classic Stellar asset —
+that any job applicant can verify in seconds, and DTI can revoke instantly.
 
-It covers **both** workshop tracks:
+Built for the StellarX workshop (idea #170) on the workshop scaffold.
+**Stellar testnet only.** The UI is a small design system — "security paper &
+official seal" — built on Tailwind v4 tokens, with the verdict rendered as a
+stamped seal.
 
-- **Fullstack payments** — a Next.js app: connect Freighter → fund via Friendbot →
-  view XLM/USDC balances → send a payment → confirm on-chain.
-- **Soroban smart contract** — a small Rust contract (a *Savings Goal* tracker)
-  you build, test, deploy with the Stellar CLI, and call from the same frontend.
+## How it works (the Stellar part)
 
-```
-.
-├── web/                      # Next.js 16 + TypeScript + Tailwind frontend
-├── contracts/savings-goal/   # Rust Soroban contract (init / contribute / get_state)
-├── scripts/                  # deploy.ps1 (Windows) / deploy.sh
-├── Cargo.toml                # Rust workspace
-└── CLAUDE.md                 # stack notes + Stellar gotchas (read this!)
-```
+| Real-world event | On-chain form |
+|---|---|
+| Business applies | One tx signed by the employer: `changeTrust(DTICERT, limit 1)` + `manageData(dti_name)` + `manageData(dti_cert)` |
+| DTI approves | Issuer tx: `setTrustLineFlags(authorized)` + `payment(1 DTICERT)` |
+| Credential valid | Trustline `is_authorized` **and** balance ≥ 1 — checked live on Horizon |
+| DTI revokes | `setTrustLineFlags(authorized: false)` — frozen instantly |
 
-## Prerequisites
+DTICERT is issued by a DTI-controlled account with `AUTH_REQUIRED` +
+`AUTH_REVOCABLE`. A small Soroban **registry contract**
+(`contracts/employer-registry`) maps business names to addresses so applicants
+can search by name; the classic trustline remains the source of truth and wins
+on any disagreement.
 
-- **Node.js 20+** and **npm** — for the frontend.
-- **Freighter** browser extension — create a wallet, switch it to **Test Net**.
-- For the contract track: **Rust**, the `wasm32v1-none` target, and the **Stellar CLI**.
+## Run it
 
-You can run the **payments demo with just Node + Freighter** — Rust/CLI are only
-needed to deploy the Soroban contract.
-
-### Install the contract toolchain (Windows)
-
-Install Rust and the Stellar CLI:
-
-```powershell
-winget install --id Rustlang.Rustup -e --accept-source-agreements --accept-package-agreements
-winget install --id Stellar.StellarCLI -e --accept-source-agreements --accept-package-agreements
-```
-
-Then **open a new terminal** (so `cargo`/`stellar` land on PATH) and give Rust a
-working linker — pick one:
-
-**Easiest — GNU toolchain** (no admin, no large download):
-
-```powershell
-rustup default stable-x86_64-pc-windows-gnu
-rustup target add wasm32v1-none
-```
-
-**Or MSVC** (matches Stellar's docs): install the **Visual C++ Build Tools** (the
-"Desktop development with C++" workload), then:
-
-```powershell
-rustup target add wasm32v1-none
-```
-
-> If `cargo` fails with *"linker `link.exe` not found"*, you skipped the step
-> above — use the GNU toolchain or install the Build Tools.
-
-On macOS/Linux: install Rust from <https://rustup.rs>, run
-`rustup target add wasm32v1-none`, and install the Stellar CLI
-(`brew install stellar-cli`).
-
-## 1. Run the frontend (the part that demos immediately)
+Prereqs: Node 20+, the Freighter extension (switched to **Test Net**), and for
+the contract: Rust + the `wasm32v1-none` target + the Stellar CLI.
 
 ```powershell
 cd web
-npm install        # already run if you scaffolded via this repo
-npm run dev
+npm install
+npm run setup:issuer     # creates + funds the DTI issuer, writes web/.env.local
+cd ..
+.\scripts\deploy.ps1     # builds + deploys the registry, inits admin, writes contract id
+cd web
+npm run dev              # http://localhost:3000
 ```
 
-Open <http://localhost:3000>, then:
+macOS/Linux: `./scripts/deploy.sh` instead of the PowerShell script.
 
-1. **Connect Freighter** (approve in the extension; make sure it's on Test Net).
-2. **Fund with Friendbot** — your XLM balance jumps to ~10,000.
-3. **Send a payment** to another *existing, funded* testnet account
-   (create one at <https://laboratory.stellar.org/#account-creator?network=test>).
-4. Watch the status go Building → Signing → Submitting → Confirming → Success,
-   then open the **Stellar Expert** link to see it on-chain.
+## The views
 
-`web/.env.local` is pre-filled with testnet config. `NEXT_PUBLIC_CONTRACT_ID` is
-left empty — the Savings Goal panel shows deploy instructions until you set it.
+- **/** — landing.
+- **/employer** — connect Freighter, fund via Friendbot, submit the
+  application (one signature).
+- **/verify** — applicant search, no wallet needed. VERIFIED / REVOKED /
+  NOT FOUND, cross-checked between the registry and the live ledger.
+- **/dti** — portal: pending applications, Approve / Revoke (server-signed
+  with the issuer key from `.env.local`; unauthenticated — demo only). The
+  API routes behind it are also rate-limited (10/min per IP per route) and
+  emit structured single-line request logs.
 
-## 2. Build, test & deploy the Soroban contract
+## Demo arc (2–4 min)
 
-```powershell
-# from the repo root
-cargo test                 # runs the contract unit tests (no network needed)
+1. Employer connects + funds + applies — one Freighter signature.
+2. /dti shows the application (claimed name + DTI cert no.).
+3. Approve → trustline authorized + 1 DTICERT issued + registry entry.
+4. /verify → search the name → VERIFIED with live ledger proof.
+5. Revoke on /dti → /verify now shows REVOKED. No cooperation from the
+   scammer needed.
 
-# deploy to testnet + auto-wire the contract ID into web/.env.local
-.\scripts\deploy.ps1       # macOS/Linux:  ./scripts/deploy.sh
-```
+## Tests / verification
 
-The deploy script will: create+fund a testnet identity (if needed), run
-`stellar contract build`, deploy, initialise the goal (target `1000`), and write
-`NEXT_PUBLIC_CONTRACT_ID` into `web/.env.local`. **Restart `npm run dev`** and the
-**Savings Goal** panel goes live: it reads on-chain progress and lets a connected
-wallet `contribute` (a real signed Soroban transaction).
+- `cargo test` — registry contract unit tests.
+- `cd web && npm test` — 22 unit tests over the credential/registry lib layer (vitest).
+- `cd web && npm run lint && npx tsc --noEmit`
+- `cd web && npm run e2e:testnet` — automated apply→approve→verify→revoke arc
+  against testnet through the running dev server (start `npm run dev` first;
+  if port 3000 is taken, pass `E2E_BASE_URL`).
 
-### The contract (`contracts/savings-goal/src/lib.rs`)
+## Manual E2E checklist (before submission)
 
-| Function | Purpose |
-|---|---|
-| `init(target: i128)` | Set the savings target (once). |
-| `contribute(amount: i128) -> i128` | Add to the saved total; returns the new total. |
-| `get_state() -> State` | Read `{ saved, target }`. |
-
-It uses plain integer state (no token transfers) so it's bulletproof in a live
-demo. To make it move real money, swap `contribute` to call the XLM/USDC SAC
-`transfer` and store per-user contributions — see CLAUDE.md for the SAC addresses.
-
-## 3. Make it your idea
-
-This is your *starting point*, not the answer. Pick an idea + track from the
-workshop's 300-ideas list (Philippines remittance / payments / financial
-inclusion themes score well), then reshape the components and the contract.
-Good extension paths: transaction history from Horizon, USDC trustline + send,
-a swap via Soroswap, a price feed via Reflector.
-
-For a fully worked example built on this scaffold, see the **Paluwagan** app in
-`..\Stellar-Workshop-PUP-May-2026-EXAMPLE`.
+- [ ] Employer flow with a real Freighter wallet
+- [ ] /dti Approve, then the VERIFIED badge on /verify
+- [ ] Revoke flips /verify to REVOKED after refresh
+- [ ] Fresh clone: setup → deploy → demo works end-to-end
 
 ## Troubleshooting
 
-- **Freighter "not detected"** — install it, reload the page, and confirm it's unlocked.
-- **Payment fails `op_no_destination`** — fund the destination account first.
-- **`tx_bad_auth`** — wrong network passphrase; this app uses `Networks.TESTNET`.
-- **Contract panel can't read state** — make sure you deployed *and* ran `init`,
-  and that `NEXT_PUBLIC_CONTRACT_ID` is set, then restart the dev server.
+- **Freighter "not detected"** — install/unlock it, reload; must be on Test Net.
+- **Setup panels on every page** — run `npm run setup:issuer` and the deploy
+  script, then restart `npm run dev`.
+- **Approve fails with `op_no_trust`** — the employer hasn't applied (no
+  trustline) yet.
+- **Registry reads fail** — the deploy script must finish `init`; check
+  `NEXT_PUBLIC_CONTRACT_ID` in `web/.env.local`.
 
-See **CLAUDE.md** for the full list of Stellar gotchas.
+## Future work
+
+Portal authentication, SEP-1 `stellar.toml` metadata for DTICERT, real DTI
+records integration, name-uniqueness rules, mainnet hardening.
+
+## License
+
+MIT (see LICENSE).
