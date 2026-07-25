@@ -99,7 +99,16 @@ async function post(route, employer) {
 const employer = Keypair.random();
 const bizName = `E2E Test Corp ${employer.publicKey().slice(-5)}`;
 console.log('Employer:', employer.publicKey());
-await fetch(`https://friendbot.stellar.org?addr=${employer.publicKey()}`);
+
+const friendbotRes = await fetch(
+  `https://friendbot.stellar.org?addr=${employer.publicKey()}`,
+);
+if (!friendbotRes.ok) {
+  console.error(
+    `Friendbot funding failed (${friendbotRes.status}): ${await friendbotRes.text()}`,
+  );
+  process.exit(1);
+}
 
 const employerAccount = await horizon.loadAccount(employer.publicKey());
 const applyTx = new TransactionBuilder(employerAccount, {
