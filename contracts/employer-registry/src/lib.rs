@@ -70,6 +70,89 @@ impl EmployerRegistryContract {
         Ok(())
     }
 
+    /// Create or overwrite a business entry with status `Verified`.
+    /// Admin-only. Overwriting doubles as "update details" and "reinstate".
+    pub fn register(
+        env: Env,
+        employer: Address,
+        name: String,
+        cert_no: String,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let key = DataKey::Entry(employer.clone());
+        if !env.storage().persistent().has(&key) {
+            let mut index: Vec<Address> = env
+                .storage()
+                .instance()
+                .get(&DataKey::Index)
+                .unwrap_or(Vec::new(&env));
+            index.push_back(employer.clone());
+            env.storage().instance().set(&DataKey::Index, &index);
+        }
+        let entry = Entry {
+            employer: employer.clone(),
+            name,
+            cert_no,
+            status: Status::Verified,
+        };
+        env.storage().persistent().set(&key, &entry);
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+        env.events()
+            .publish((symbol_short!("register"), employer), ());
+        Ok(())
+    }
+
+    /// Flip a business to `Revoked` (kept listed so the directory can warn).
+    /// Admin-only.
+    pub fn revoke(env: Env, employer: Address) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let key = DataKey::Entry(employer.clone());
+        let mut entry: Entry = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::NotFound)?;
+        entry.status = Status::Revoked;
+        env.storage().persistent().set(&key, &entry);
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+        env.events().publish((symbol_short!("revoke"), employer), ());
+        Ok(())
+    }
+
+    /// Every business ever registered (Verified and Revoked alike).
+    pub fn list(env: Env) -> Vec<Entry> {
+        let index: Vec<Address> = env
+            .storage()
+            .instance()
+            .get(&DataKey::Index)
+            .unwrap_or(Vec::new(&env));
+        let mut out = Vec::new(&env);
+        for addr in index.iter() {
+            if let Some(entry) = env.storage().persistent().get(&DataKey::Entry(addr)) {
+                out.push_back(entry);
+            }
+        }
+        out
+    }
+
     /// Read one business by employer address.
     pub fn get(env: Env, employer: Address) -> Option<Entry> {
         env.storage().persistent().get(&DataKey::Entry(employer))
