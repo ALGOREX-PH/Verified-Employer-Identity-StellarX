@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "setup:issuer": "node scripts/setup-issuer.mjs",
+    "e2e:testnet": "node scripts/e2e-testnet.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
