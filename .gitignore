@@ -1,6 +1,7 @@
 # Rust / Soroban
 /target
 **/*.rs.bk
+test_snapshots/
 
 
 # Node / Next.js (the web/ app keeps its own .gitignore too)

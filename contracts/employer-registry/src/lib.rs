@@ -54,6 +54,10 @@ pub struct EmployerRegistryContract;
 #[contractimpl]
 impl EmployerRegistryContract {
     /// Set the admin (the DTI issuer account). Can only be called once.
+    ///
+    /// Deliberately unauthenticated: the deploy script invokes it in the same
+    /// breath as a fresh deploy and aborts loudly if it fails (a fresh contract
+    /// can never be legitimately `AlreadyInitialized`). Accepted testnet risk.
     pub fn init(env: Env, admin: Address) -> Result<(), Error> {
         if env.storage().instance().has(&DataKey::Admin) {
             return Err(Error::AlreadyInitialized);
