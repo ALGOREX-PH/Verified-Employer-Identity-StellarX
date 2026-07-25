@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Deploy the savings-goal contract to Stellar testnet, then write the contract
-# ID into web/.env.local so the frontend can call it.
+# Deploy the employer-registry contract to Stellar testnet, initialise it with
+# the DTI issuer as admin, then write the contract ID into web/.env.local.
 #
-# Prereqs (from the workshop setup checklist): Rust + the wasm32v1-none target,
-# and the Stellar CLI (run `stellar --version` to confirm).
+# Prereqs: Rust + wasm32v1-none target, the Stellar CLI, and a configured
+# issuer (run `npm run setup:issuer` in web/ first).
 #
 # Usage:  ./scripts/deploy.sh [identityName]   (default identity: workshop)
 set -euo pipefail
@@ -11,12 +11,23 @@ set -euo pipefail
 IDENTITY="${1:-workshop}"
 NETWORK="testnet"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WASM="target/wasm32v1-none/release/savings_goal.wasm"
+WASM="target/wasm32v1-none/release/employer_registry.wasm"
 ENV_FILE="$ROOT/web/.env.local"
 
 cd "$ROOT"
 
-# 1. Ensure a funded testnet identity exists
+# 0. The registry admin is the DTI issuer — created by `npm run setup:issuer`.
+if [ ! -f "$ENV_FILE" ]; then
+  echo "web/.env.local not found. Run 'npm run setup:issuer' in web/ first." >&2
+  exit 1
+fi
+ISSUER="$(grep '^NEXT_PUBLIC_DTI_ISSUER=' "$ENV_FILE" | head -n1 | cut -d= -f2 | tr -d '[:space:]')"
+if [ -z "$ISSUER" ]; then
+  echo "NEXT_PUBLIC_DTI_ISSUER missing from web/.env.local. Run 'npm run setup:issuer' in web/ first." >&2
+  exit 1
+fi
+
+# 1. Ensure a funded testnet identity exists (pays the deploy fees)
 if ! stellar keys ls | grep -qx "$IDENTITY"; then
   echo "Creating + funding testnet identity '$IDENTITY'..."
   stellar keys generate "$IDENTITY" --network "$NETWORK" --fund
@@ -34,19 +45,19 @@ CONTRACT_ID=$(stellar contract deploy \
   --network "$NETWORK")
 echo "Deployed contract ID: $CONTRACT_ID"
 
-# 4. Initialise the savings goal (target = 1000). Ignore error if already initialised.
-echo "Initialising savings goal (target 1000)..."
+# 4. Initialise the registry with the DTI issuer as admin.
+# A fresh deploy can never be legitimately AlreadyInitialized - if init fails,
+# assume the contract id was front-run/hijacked and abort loudly (set -e).
+echo "Initialising registry (admin = $ISSUER)..."
 stellar contract invoke \
   --id "$CONTRACT_ID" \
   --source-account "$IDENTITY" \
   --network "$NETWORK" \
-  -- init --target 1000 || echo "(init skipped — contract may already be initialised)"
+  -- init --admin "$ISSUER"
 
 # 5. Write NEXT_PUBLIC_CONTRACT_ID into web/.env.local
-if [ -f "$ENV_FILE" ]; then
-  grep -v '^NEXT_PUBLIC_CONTRACT_ID=' "$ENV_FILE" > "$ENV_FILE.tmp" || true
-  mv "$ENV_FILE.tmp" "$ENV_FILE"
-fi
+grep -v '^NEXT_PUBLIC_CONTRACT_ID=' "$ENV_FILE" > "$ENV_FILE.tmp" || true
+mv "$ENV_FILE.tmp" "$ENV_FILE"
 echo "NEXT_PUBLIC_CONTRACT_ID=$CONTRACT_ID" >> "$ENV_FILE"
 echo ""
 echo "Wrote NEXT_PUBLIC_CONTRACT_ID=$CONTRACT_ID to web/.env.local"
