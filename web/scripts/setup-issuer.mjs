@@ -32,7 +32,13 @@ const kp = Keypair.random();
 console.log('Issuer public key:', kp.publicKey());
 
 console.log('Funding via Friendbot...');
-const res = await fetch(`https://friendbot.stellar.org?addr=${kp.publicKey()}`);
+let res;
+try {
+  res = await fetch(`https://friendbot.stellar.org?addr=${kp.publicKey()}`);
+} catch (err) {
+  console.error('Friendbot request failed:', err.message);
+  process.exit(1);
+}
 if (!res.ok) {
   console.error('Friendbot funding failed with HTTP', res.status);
   process.exit(1);
@@ -40,16 +46,28 @@ if (!res.ok) {
 
 console.log('Setting AUTH_REQUIRED + AUTH_REVOCABLE...');
 const horizon = new Horizon.Server('https://horizon-testnet.stellar.org');
-const account = await horizon.loadAccount(kp.publicKey());
-const tx = new TransactionBuilder(account, {
-  fee: BASE_FEE,
-  networkPassphrase: Networks.TESTNET,
-})
-  .addOperation(Operation.setOptions({ setFlags: AuthRequiredFlag | AuthRevocableFlag }))
-  .setTimeout(60)
-  .build();
-tx.sign(kp);
-await horizon.submitTransaction(tx);
+try {
+  const account = await horizon.loadAccount(kp.publicKey());
+  const tx = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(Operation.setOptions({ setFlags: AuthRequiredFlag | AuthRevocableFlag }))
+    .setTimeout(60)
+    .build();
+  tx.sign(kp);
+  await horizon.submitTransaction(tx);
+} catch (err) {
+  console.error(
+    'Failed while setting AUTH_REQUIRED/AUTH_REVOCABLE flags:',
+    err.message,
+  );
+  console.error(
+    `The account ${kp.publicKey()} was funded by Friendbot but never configured — it has been abandoned (orphaned testnet accounts are free).`,
+  );
+  console.error('Just re-run: npm run setup:issuer -- --force (a fresh issuer will be generated).');
+  process.exit(1);
+}
 
 const lines = existing
   .split(/\r?\n/)
