@@ -21,9 +21,8 @@ export default function DtiPage() {
       ) : (
         <>
           <p className="mb-4 text-sm text-ink-soft">
-            Applications appear here the moment an employer opens a DTICERT
-            trustline. Approving authorizes the trustline, issues the
-            credential, and lists the business in the public registry.
+            Approving authorizes the trustline, issues the credential, and
+            lists the business in the public registry.
           </p>
           <ApplicationsTable />
           <p className="mt-6 text-xs text-ink-soft">
