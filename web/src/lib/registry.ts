@@ -29,8 +29,9 @@ interface RawEntry {
   status: unknown;
 }
 
-/** Unit-variant contract enums decode as ['Verified'] (or 'Verified') — normalize. */
-function toEntry(raw: RawEntry): RegistryEntry {
+/** Unit-variant contract enums decode as ['Verified'] (or 'Verified') — normalize.
+ *  Exported for unit testing and reuse. */
+export function toEntry(raw: RawEntry): RegistryEntry {
   const s = Array.isArray(raw.status) ? String(raw.status[0]) : String(raw.status);
   return {
     employer: raw.employer,
