@@ -1,11 +1,16 @@
-# StellarX Workshop Starter — project notes for AI tools
+# Lehitimo — project notes for AI tools
 
-A monorepo scaffold for a StellarX workshop. Two parts:
+Verified Employer Identity on Stellar testnet (StellarX workshop idea #170).
+Two parts:
 
-- `web/` — Next.js 16 + TypeScript + Tailwind v4 frontend (connect Freighter,
-  show balances, send a testnet payment, invoke a Soroban contract).
-- `contracts/savings-goal/` — a Rust Soroban contract (`init` / `contribute` /
-  `get_state`) with unit tests.
+- `web/` — Next.js 16 + TypeScript + Tailwind v4 frontend. Routes: `/`
+  (landing), `/employer` (Freighter application flow), `/verify` (applicant
+  search, no wallet), `/dti` (portal; approve/revoke via server-signed API
+  routes using `DTI_ISSUER_SECRET` from `web/.env.local`).
+- `contracts/employer-registry/` — Rust Soroban registry
+  (`init` / `register` / `revoke` / `get` / `list`) with unit tests. Admin is
+  the DTI issuer account. The registry is the index; the classic DTICERT
+  trustline is the truth.
 
 ## Stack / versions
 
@@ -22,7 +27,6 @@ A monorepo scaffold for a StellarX workshop. Two parts:
 | Horizon | `https://horizon-testnet.stellar.org` |
 | Friendbot | `https://friendbot.stellar.org?addr=YOUR_KEY` |
 | Network passphrase | `Test SDF Network ; September 2015` |
-| USDC issuer (Circle, testnet) | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
 | Explorer | `https://stellar.expert/explorer/testnet` |
 
 ## Stellar gotchas (these waste the most time)
@@ -41,10 +45,17 @@ A monorepo scaffold for a StellarX workshop. Two parts:
 ## Where things live
 
 - Stellar config + Friendbot: `web/src/lib/stellar.ts`
-- Balances (Horizon): `web/src/lib/balances.ts`
-- Payment build/submit/poll: `web/src/lib/payment.ts`
-- Soroban read/write: `web/src/lib/contract.ts`
+- Credential (DTICERT) status + application tx: `web/src/lib/credential.ts`
+- Registry reads + admin invokes: `web/src/lib/registry.ts`
+- DTI applications query (Horizon): `web/src/lib/dti.ts`
+- Submit/poll: `web/src/lib/submit.ts`; Freighter sign helper: `web/src/lib/sign.ts`
 - Wallet hook: `web/src/hooks/useWallet.ts`
-- UI: `web/src/components/*`, wired in `web/src/app/page.tsx`
-- Contract: `contracts/savings-goal/src/lib.rs` (+ `test.rs`)
+- API routes (issuer-signed): `web/src/app/api/dti/approve/route.ts`, `.../revoke/route.ts`
+- API helpers (validation/rate-limit/logging): `web/src/lib/api.ts`
+- Design tokens + fonts: `web/src/app/globals.css` (@theme), `web/src/app/layout.tsx`
+- Seal (verdict stamp): `web/src/components/Seal.tsx`
+- UI: `web/src/app/{page,employer,verify,dti}` + `web/src/components/*`
+- Contract: `contracts/employer-registry/src/lib.rs` (+ `test.rs`)
+- Unit tests: `web/src/lib/__tests__/` (`npm test`)
+- Issuer setup: `web/scripts/setup-issuer.mjs`; E2E: `web/scripts/e2e-testnet.mjs`
 - Deploy: `scripts/deploy.ps1` (Windows) / `scripts/deploy.sh`
