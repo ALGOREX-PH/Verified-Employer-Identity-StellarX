@@ -65,8 +65,14 @@ export default function VerifySearch() {
           <div className="rounded border border-rule bg-surface p-6 text-center">
             <StatusBadge kind="none" />
             <p className="mt-2 text-sm text-ink-soft">
-              No DTI-verified business matches &ldquo;{query.trim()}&rdquo;. If a
-              job posting claims otherwise, treat it as a red flag.
+              {query.trim() ? (
+                <>
+                  No DTI-verified business matches &ldquo;{query.trim()}&rdquo;.
+                  If a job posting claims otherwise, treat it as a red flag.
+                </>
+              ) : (
+                'No verified businesses in the registry yet.'
+              )}
             </p>
           </div>
         )}
