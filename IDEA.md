@@ -1,41 +1,53 @@
-# Your Project
-
-Fill this in as you build. It doubles as your **submission README**, and it maps
-directly to how projects are judged (meaningful Stellar use, real problem,
-working demo).
+# Lehitimo — Verified Employer Identity
 
 ## Idea
-- **Track:** Remittance / Financial Inclusion / DeFi & RWA / AI / Social Impact / Open
-- **Idea # (from the 300-ideas list, if any):**
-- **One-liner:**
+- **Track:** Social Impact (financial-inclusion angle: protecting job seekers)
+- **Idea # (from the 300-ideas list):** 170
+- **One-liner:** DTI-certified businesses get a revocable on-chain credential
+  (a classic Stellar asset) that any job applicant can verify by name in
+  seconds — check before you apply.
 
 ## Problem
-Who has this problem, and why does it matter? (A clear Philippines remittance /
-payments / financial-inclusion angle scores well.)
+Job scams are rampant in the Philippines — fake employers collect "processing
+fees" or personal data from applicants. There is no quick, trustworthy way for
+an applicant to check that an employer is a legitimate DTI-registered
+business. Victims are disproportionately first-time and overseas-bound
+workers.
 
 ## How it uses Stellar
-Which Stellar pieces are **core** (not cosmetic)? e.g. payments, trustlines,
-path payments, claimable balances, a Soroban contract, anchors (SEP-24/31),
-Soroswap/Blend/Reflector. Stellar must be central to the product.
+Stellar is the product, not a bolt-on:
+- **Classic asset as credential:** DTICERT, issued by a DTI-controlled account
+  with `AUTH_REQUIRED` + `AUTH_REVOCABLE`. The employer's trustline IS the
+  application; authorization + 1 DTICERT is the credential; freezing the
+  trustline is instant revocation.
+- **manageData** carries the employer's claimed business name and DTI cert
+  number on their own account.
+- **Soroban registry contract** (`employer-registry`) makes credentials
+  searchable by business name; the classic trustline stays the source of
+  truth and wins on any disagreement.
+- **Horizon** for live credential checks; **Soroban RPC** for registry reads.
 
 ## What works in the demo
-- [ ] Connect wallet (Freighter, testnet)
-- [ ] Core flow runs end-to-end on testnet
-- [ ] _(your headline feature here)_
+- [x] Connect wallet (Freighter, testnet)
+- [x] Employer applies with one signature (trustline + metadata)
+- [x] DTI portal approves: authorize + issue 1 DTICERT + registry entry
+- [x] Applicant searches by name, sees VERIFIED with live ledger cross-check
+- [x] Instant revocation flips the badge to REVOKED
+- [x] Production layer: rate-limited, logged, server-signed DTI API routes
+- [x] 22 lib unit tests (vitest) + contract unit tests + automated testnet E2E arc
 
 ## Setup / run
-How a judge runs it locally:
 - Network: **testnet**
-- `cd web && npm install && npm run dev`
-- Contract (if used): `.\scripts\deploy.ps1`, then set `NEXT_PUBLIC_CONTRACT_ID`
-- Any other env vars / steps:
+- `cd web && npm install && npm run setup:issuer`
+- `.\scripts\deploy.ps1` (macOS/Linux: `./scripts/deploy.sh`)
+- `cd web && npm run dev`
 
 ## Demo
-- 2–4 min video link (show the core flow working on testnet):
-- Public repo link:
+- 2–4 min video link: _add after recording_
+- Public repo link: _this repository_
 
 ## Submission checklist
-- [ ] Public GitHub repo with a license (this scaffold ships MIT — update `LICENSE`)
-- [ ] README explains problem, Stellar usage, and setup
+- [x] Public GitHub repo with a license (MIT)
+- [x] README explains problem, Stellar usage, and setup
 - [ ] Demo video (2–4 min)
 - [ ] Submitted via the workshop's official GitHub issue template
