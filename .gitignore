@@ -1,7 +1,7 @@
 # Rust / Soroban
 /target
 **/*.rs.bk
-Cargo.lock
+
 
 # Node / Next.js (the web/ app keeps its own .gitignore too)
 node_modules
