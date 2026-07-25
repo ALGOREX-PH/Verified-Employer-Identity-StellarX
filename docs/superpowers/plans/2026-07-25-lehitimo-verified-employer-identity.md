@@ -2890,3 +2890,11 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 
 
+
+---
+
+## Addendum A — Production-standard amendment (2026-07-25, user directive)
+
+- Workflow from this point: every commit is ONE meaningful micro-edit (logical increment, not a whole-file dump); terse message ("added X", "updated Y"); NO AI attribution/trailers; push to origin after every commit. Parallel isolated agents commit locally; the controller merges and pushes.
+- Tasks 8–13 are upgraded to production standard: API routes gain strict input validation, dependency-free per-IP rate limiting, structured logging, consistent error shape; UI gains responsive, accessible, visually polished treatment per the design direction in amended briefs; new tasks: shell design-system polish (8.5) and unit tests via vitest (11.5, supersedes the spec's no-JS-test-framework non-goal per user directive); the docs task also syncs SUBMISSION.md.
+- Amended briefs are authored files in the SDD workspace (task-N-amended-brief.md); they supersede the plan's original task text where they conflict.
