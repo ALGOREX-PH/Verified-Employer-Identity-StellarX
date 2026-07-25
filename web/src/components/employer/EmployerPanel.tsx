@@ -99,7 +99,7 @@ export default function EmployerPanel({ publicKey }: { publicKey: string }) {
 
           {info.status === 'pending' && (
             <div className="rounded border border-goldleaf/30 bg-surface p-6">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-lg text-ink">Application submitted</h2>
                 <StatusBadge kind="pending" />
               </div>
@@ -114,7 +114,7 @@ export default function EmployerPanel({ publicKey }: { publicKey: string }) {
           {info.status === 'verified' && (
             <div className="relative rounded border border-seal/40 bg-surface p-6">
               <div className="pointer-events-none absolute inset-2 rounded border border-seal/20" />
-              <div className="relative flex flex-wrap items-start gap-4">
+              <div className="relative flex flex-col items-start gap-4 sm:flex-row">
                 <Seal size={88} className="animate-stamp shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -142,7 +142,7 @@ export default function EmployerPanel({ publicKey }: { publicKey: string }) {
 
           {info.status === 'revoked' && (
             <div className="rounded border border-alarm/30 bg-alarm-wash p-6">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-lg text-ink">Credential revoked</h2>
                 <StatusBadge kind="revoked" />
               </div>
