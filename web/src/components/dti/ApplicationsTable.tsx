@@ -87,10 +87,6 @@ export default function ApplicationsTable() {
     }
   };
 
-  if (loading) {
-    return <div className="h-32 animate-pulse rounded bg-rule/50" />;
-  }
-
   const counts = {
     pending: apps.filter((a) => a.status === 'pending').length,
     verified: apps.filter((a) => a.status === 'verified').length,
@@ -105,8 +101,14 @@ export default function ApplicationsTable() {
         </p>
       )}
 
+      {/* Stays mounted across the loading transition (skeleton included)
+          so screen readers announce content changes inside it — a fresh
+          mount does not reliably announce, only mutations of a persisted
+          live region do. */}
       <div aria-live="polite">
-        {apps.length === 0 ? (
+        {loading ? (
+          <div className="h-32 animate-pulse rounded bg-rule/50" />
+        ) : apps.length === 0 ? (
           <div className="rounded border border-dashed border-rule bg-surface p-6 text-center text-sm text-ink-soft">
             No applications yet — an employer opens one by submitting the form
             on the Employers page.
