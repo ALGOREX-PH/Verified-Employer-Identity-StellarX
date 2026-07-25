@@ -13,6 +13,10 @@ node_modules
 .env.local
 .env*.local
 
+# Agent scratch (worktrees, SDD ledgers)
+.claude/worktrees/
+.superpowers/
+
 # OS / editor
 .DS_Store
 Thumbs.db
