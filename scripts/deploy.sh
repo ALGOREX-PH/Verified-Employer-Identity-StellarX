@@ -21,7 +21,7 @@ if [ ! -f "$ENV_FILE" ]; then
   echo "web/.env.local not found. Run 'npm run setup:issuer' in web/ first." >&2
   exit 1
 fi
-ISSUER="$(grep '^NEXT_PUBLIC_DTI_ISSUER=' "$ENV_FILE" | head -n1 | cut -d= -f2 | tr -d '[:space:]')"
+ISSUER="$(grep '^NEXT_PUBLIC_DTI_ISSUER=' "$ENV_FILE" | head -n1 | cut -d= -f2 | tr -d '[:space:]' || true)"
 if [ -z "$ISSUER" ]; then
   echo "NEXT_PUBLIC_DTI_ISSUER missing from web/.env.local. Run 'npm run setup:issuer' in web/ first." >&2
   exit 1
