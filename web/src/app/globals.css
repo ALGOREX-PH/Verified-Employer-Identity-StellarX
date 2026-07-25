@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-paper: #F6F8F5;      /* security-document off-white, cool green cast */
+  --color-surface: #FFFFFF;
+  --color-ink: #15271F;        /* ledger ink — primary text */
+  --color-ink-soft: #4A5B52;   /* secondary text */
+  --color-seal: #0C6B4A;       /* brand green = "verified" */
+  --color-seal-deep: #095239;  /* hover/active */
+  --color-seal-wash: #E7F1EC;  /* verified tint background */
+  --color-goldleaf: #86611A;   /* notary gold — pending (darkened from spec #8F6A1C for AA contrast on gold-wash) */
+  --color-gold-wash: #F7EFDC;
+  --color-alarm: #B3261E;      /* revoked — used ONLY for revocation/danger */
+  --color-alarm-wash: #F9E9E7;
+  --color-rule: #D9E0D8;       /* hairline borders */
+  --font-display: var(--font-caslon), Georgia, serif;
+  --font-sans: var(--font-public), system-ui, sans-serif;
+  --font-mono: var(--font-spline-mono), ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes stamp {
+    from {
+      transform: scale(1.18) rotate(-2deg);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1) rotate(-8deg);
+      opacity: 1;
+    }
+  }
+
+  .animate-stamp {
+    animation: stamp 240ms ease-out both;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
 }
