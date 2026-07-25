@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Full testnet E2E: apply → approve → verify → revoke → re-approve, using a
-// throwaway employer keypair signed locally (no Freighter needed).
+// Full testnet E2E: apply → approve → verify → revoke → re-approve → final
+// revoke, using a throwaway employer keypair signed locally (no Freighter
+// needed). The arc always ends on a revoke so no E2E artifact is left
+// Verified in the live registry.
 //
 // Prereqs: `npm run setup:issuer` done, registry deployed, `npm run dev`
 // running. Usage (from web/):  npm run e2e:testnet
@@ -163,6 +165,26 @@ check(
 
 entry = await registryEntry(employer.publicKey());
 check('re-approve: registry entry Verified again', entry !== null && entry.status === 'Verified');
+
+// --- 5. Final revoke (leave no Verified test artifact in the registry) ------
+const finalRevoke = await post('revoke', employer.publicKey());
+check(
+  `final revoke API ok ${finalRevoke.ok ? '' : JSON.stringify(finalRevoke.body)}`,
+  finalRevoke.ok,
+);
+
+acct = await horizon.loadAccount(employer.publicKey());
+line = credLine(acct);
+check(
+  'final revoke: trustline frozen (REVOKED)',
+  Boolean(line) && line.is_authorized === false,
+);
+
+entry = await registryEntry(employer.publicKey());
+check(
+  'final revoke: registry entry Revoked',
+  entry !== null && entry.status === 'Revoked',
+);
 
 console.log(failures === 0 ? '\nE2E PASS' : `\nE2E FAIL (${failures} checks failed)`);
 process.exit(failures === 0 ? 0 : 1);
