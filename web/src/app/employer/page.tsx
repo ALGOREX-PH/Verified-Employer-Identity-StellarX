@@ -23,7 +23,11 @@ export default function EmployerPage() {
             <ConnectWallet {...wallet} />
           </div>
           {publicKey ? (
-            <EmployerPanel publicKey={publicKey} />
+            // key={publicKey} forces a fresh EmployerPanel (and thus a fresh
+            // `loading: true` initial state) whenever the connected account
+            // changes, so switching accounts shows the skeleton instead of
+            // the previous account's stale status card.
+            <EmployerPanel key={publicKey} publicKey={publicKey} />
           ) : (
             <div className="rounded border border-rule bg-surface py-16 text-center text-ink-soft">
               <p>
