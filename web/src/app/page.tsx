@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <main id="main" className="w-full bg-paper">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
-        <section className="relative rounded border border-rule bg-surface px-6 py-10 sm:px-10 sm:py-14">
+        <section className="relative overflow-x-clip rounded border border-rule bg-surface px-6 py-10 sm:px-10 sm:py-14">
           <div className="pointer-events-none absolute inset-3 rounded border border-rule/70 sm:inset-4" />
 
           <div className="absolute -right-4 -top-8 hidden sm:block">
