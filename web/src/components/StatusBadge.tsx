@@ -1,10 +1,10 @@
 export type BadgeKind = 'verified' | 'pending' | 'revoked' | 'none';
 
 const STYLES: Record<BadgeKind, string> = {
-  verified: 'border-emerald-300 bg-emerald-100 text-emerald-800',
-  pending: 'border-amber-300 bg-amber-100 text-amber-800',
-  revoked: 'border-red-300 bg-red-100 text-red-800',
-  none: 'border-gray-300 bg-gray-100 text-gray-600',
+  verified: 'border-seal/30 bg-seal-wash text-seal',
+  pending: 'border-goldleaf/30 bg-gold-wash text-goldleaf',
+  revoked: 'border-alarm/30 bg-alarm-wash text-alarm',
+  none: 'border-rule bg-paper text-ink-soft',
 };
 
 const DEFAULT_LABEL: Record<BadgeKind, string> = {
@@ -23,7 +23,7 @@ export default function StatusBadge({
 }) {
   return (
     <span
-      className={`inline-block rounded-full border px-3 py-0.5 text-xs font-semibold tracking-wide ${STYLES[kind]}`}
+      className={`inline-block rounded-full border px-3 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide ${STYLES[kind]}`}
     >
       {label ?? DEFAULT_LABEL[kind]}
     </span>
