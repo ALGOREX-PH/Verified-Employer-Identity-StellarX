@@ -1,5 +1,5 @@
 import { NETWORK_PASSPHRASE } from './stellar';
-import { submitSignedXDR, pollTransaction } from './payment';
+import { submitSignedXDR, pollTransaction } from './submit';
 
 /**
  * Sign an unsigned XDR with Freighter, submit it, and poll to finality.
