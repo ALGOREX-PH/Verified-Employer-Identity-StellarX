@@ -979,12 +979,13 @@ Write-Host "Deploying to $Network..."
 $ContractId = (stellar contract deploy --wasm $Wasm --source-account $Identity --network $Network).Trim()
 Write-Host "Deployed contract ID: $ContractId"
 
-# 4. Initialise the registry with the DTI issuer as admin
+# 4. Initialise the registry with the DTI issuer as admin.
+# A fresh deploy can never be legitimately AlreadyInitialized - if init fails,
+# assume the contract id was front-run/hijacked and abort loudly.
 Write-Host "Initialising registry (admin = $Issuer)..."
-try {
-  stellar contract invoke --id $ContractId --source-account $Identity --network $Network -- init --admin $Issuer
-} catch {
-  Write-Host "(init skipped - contract may already be initialised)"
+stellar contract invoke --id $ContractId --source-account $Identity --network $Network -- init --admin $Issuer
+if ($LASTEXITCODE -ne 0) {
+  throw "Registry init failed - do NOT use this contract id. Re-run the deploy."
 }
 
 # 5. Write NEXT_PUBLIC_CONTRACT_ID into web\.env.local
@@ -1045,13 +1046,15 @@ CONTRACT_ID=$(stellar contract deploy \
   --network "$NETWORK")
 echo "Deployed contract ID: $CONTRACT_ID"
 
-# 4. Initialise the registry with the DTI issuer as admin
+# 4. Initialise the registry with the DTI issuer as admin.
+# A fresh deploy can never be legitimately AlreadyInitialized - if init fails,
+# assume the contract id was front-run/hijacked and abort loudly (set -e).
 echo "Initialising registry (admin = $ISSUER)..."
 stellar contract invoke \
   --id "$CONTRACT_ID" \
   --source-account "$IDENTITY" \
   --network "$NETWORK" \
-  -- init --admin "$ISSUER" || echo "(init skipped - contract may already be initialised)"
+  -- init --admin "$ISSUER"
 
 # 5. Write NEXT_PUBLIC_CONTRACT_ID into web/.env.local
 grep -v '^NEXT_PUBLIC_CONTRACT_ID=' "$ENV_FILE" > "$ENV_FILE.tmp" || true
