@@ -41,3 +41,23 @@ export function logRoute(
 ): void {
   console.log(JSON.stringify({ route, employer, outcome, ms: Date.now() - startedAt }));
 }
+
+/**
+ * Dependency-free sliding-window rate limiter backed by a module-level map.
+ * In-memory is the right scope for this single-process demo server — it
+ * resets on redeploy and does not share state across multiple instances.
+ */
+const hits = new Map<string, number[]>();
+
+export function rateLimit(key: string, limit = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const cutoff = now - windowMs;
+  const recent = (hits.get(key) ?? []).filter((t) => t > cutoff);
+  if (recent.length >= limit) {
+    hits.set(key, recent);
+    return false;
+  }
+  recent.push(now);
+  hits.set(key, recent);
+  return true;
+}
